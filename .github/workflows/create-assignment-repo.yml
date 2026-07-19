@@ -1,0 +1,55 @@
+name: Create assignment repo
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.CLASSROOM_PAT }}
+      ORG: it-ptitsa-mentor
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+      ISSUE_REPO: ${{ github.repository }}
+      USERNAME: ${{ github.event.issue.user.login }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract assignment label
+        id: form
+        run: |
+          ASSIGNMENT=$(jq -r '.issue.labels[].name' "$GITHUB_EVENT_PATH" \
+            | grep '^assignment:' | head -1 | cut -d: -f2)
+          echo "assignment=$ASSIGNMENT" >> "$GITHUB_OUTPUT"
+
+      - name: Create repo from template and add student
+        id: create
+        if: steps.form.outputs.assignment != ''
+        env:
+          ASSIGNMENT: ${{ steps.form.outputs.assignment }}
+        run: |
+          set -e
+          REPO=$(scripts/validate.sh "$ASSIGNMENT" "$USERNAME")
+          gh api "repos/$ORG/$ASSIGNMENT/generate" \
+            -f owner="$ORG" -f name="$REPO" -F private=true \
+            -H "Accept: application/vnd.github+json"
+          gh api "repos/$ORG/$REPO/collaborators/$USERNAME" -X PUT -f permission=push
+          echo "repo_url=https://github.com/$ORG/$REPO" >> "$GITHUB_OUTPUT"
+
+      - name: Comment result and close issue
+        if: steps.form.outputs.assignment != ''
+        env:
+          REPO_URL: ${{ steps.create.outputs.repo_url }}
+          OUTCOME: ${{ steps.create.outcome }}
+        run: |
+          if [ "$OUTCOME" = "success" ]; then
+            gh issue comment "$ISSUE_NUMBER" --repo "$ISSUE_REPO" --body "Готово: $REPO_URL"
+            gh issue close "$ISSUE_NUMBER" --repo "$ISSUE_REPO"
+          else
+            gh issue comment "$ISSUE_NUMBER" --repo "$ISSUE_REPO" \
+              --body "Не получилось создать репозиторий — напиши ментору."
+          fi
