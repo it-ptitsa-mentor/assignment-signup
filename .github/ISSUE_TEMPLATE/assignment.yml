@@ -1,0 +1,48 @@
+name: Начать задание
+description: Нажмите "Create", бот создаст вашу копию репозитория
+labels: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Выберите задание из списка ниже, затем нажмите **Create**. Бот автоматически создаст для вас копию репозитория и пришлёт ссылку в комментариях.
+
+  - type: dropdown
+    id: assignment
+    attributes:
+      label: Выберите задание
+      description: Какое задание вы хотите начать?
+      options:
+        - BookHub
+        - Data-Processor-Data-Pipeline
+        - Form-Playground
+        - GitHub-Repo-Viewer
+        - JS-Pre-React-Exercises
+        - mini-YouTube-Comments
+        - Notification-Center
+        - Product-Catalog
+        - Product-Catalog-React
+        - React-Accordion
+        - React-Counter
+        - React-CRUD-App
+        - React-Form-Validation
+        - React-Movie-App
+        - React-Router-App
+        - React-Tabs
+        - React-Timer
+        - React-Todo
+        - React-User-Cards
+        - Recipe-Builder
+        - RHF-Forms
+        - Rick-And-Morty-React
+        - RTK-App
+        - TextMaster-CLI
+        - TS-Playground
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        **Важно:** не редактируйте форму и не добавляйте ничего самостоятельно. Просто выберите задание и нажмите Create.
