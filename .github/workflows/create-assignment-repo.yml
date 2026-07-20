@@ -2,7 +2,7 @@ name: Create assignment repo
 
 on:
   issues:
-    types: [opened]
+    types: [opened, labeled]
 
 permissions:
   issues: write
