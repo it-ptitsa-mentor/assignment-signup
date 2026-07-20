@@ -19,13 +19,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract assignment from form
+      - name: Extract assignment label
         id: form
         run: |
-          # Parse assignment from issue body (GitHub form field)
-          BODY=$(jq -r '.issue.body' "$GITHUB_EVENT_PATH")
-          ASSIGNMENT=$(echo "$BODY" | sed -n '/### Выберите задание/,/^###/p' \
-            | grep -v '^###' | sed 's/^[[:space:]]*//g' | head -1)
+          # Extract assignment from GitHub-added label (assignment:RTK-App → RTK-App)
+          ASSIGNMENT=$(jq -r '.issue.labels[] | select(.name | startswith("assignment:")) | .name' "$GITHUB_EVENT_PATH" \
+            | head -1 | cut -d: -f2)
           echo "assignment=$ASSIGNMENT" >> "$GITHUB_OUTPUT"
 
       - name: Create repo from template and add student
