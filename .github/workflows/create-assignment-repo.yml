@@ -19,13 +19,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract assignment label
+      - name: Extract assignment
         id: form
         run: |
-          # Extract assignment from GitHub-added label (assignment:RTK-App → RTK-App)
+          # Prefer the assignment: label (set when a repo collaborator adds it by hand).
+          # Students opening the "click to sign up" link never have write access to this
+          # repo, so GitHub silently drops the link's labels= param for them — title=
+          # still comes through fine, so fall back to it when there's no label.
           ASSIGNMENT=$(jq -r '.issue.labels[] | select(.name | startswith("assignment:")) | .name' "$GITHUB_EVENT_PATH" \
             | head -1 | cut -d: -f2)
+          if [ -z "$ASSIGNMENT" ]; then
+            TITLE=$(jq -r '.issue.title' "$GITHUB_EVENT_PATH")
+            if grep -qxF "$TITLE" scripts/assignments.txt; then
+              ASSIGNMENT="$TITLE"
+            fi
+          fi
           echo "assignment=$ASSIGNMENT" >> "$GITHUB_OUTPUT"
+
+      - name: Comment if assignment could not be determined
+        if: steps.form.outputs.assignment == ''
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo "$ISSUE_REPO" \
+            --body "Не смог понять, какое задание нужно (нет лейбла assignment:*, а title не совпадает со списком заданий) — напиши ментору."
 
       - name: Create repo from template and add student
         id: create
