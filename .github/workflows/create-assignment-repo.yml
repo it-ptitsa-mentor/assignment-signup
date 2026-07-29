@@ -50,9 +50,16 @@ jobs:
         run: |
           set -e
           REPO=$(scripts/validate.sh "$ASSIGNMENT" "$USERNAME")
-          gh api "repos/$ORG/$ASSIGNMENT/generate" \
-            -f owner="$ORG" -f name="$REPO" -F private=true \
-            -H "Accept: application/vnd.github+json"
+          # Student may already have this repo from an earlier run (re-clicked link,
+          # or signed up before a previous fix) — generate/ 422s on name collision,
+          # so check first and reuse instead of failing.
+          if gh api "repos/$ORG/$REPO" >/dev/null 2>&1; then
+            echo "Repo $REPO already exists, reusing it"
+          else
+            gh api "repos/$ORG/$ASSIGNMENT/generate" \
+              -f owner="$ORG" -f name="$REPO" -F private=true \
+              -H "Accept: application/vnd.github+json"
+          fi
           gh api "repos/$ORG/$REPO/collaborators/$USERNAME" -X PUT -f permission=push
           echo "repo_url=https://github.com/$ORG/$REPO" >> "$GITHUB_OUTPUT"
 
