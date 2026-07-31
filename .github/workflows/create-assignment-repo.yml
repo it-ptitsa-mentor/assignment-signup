@@ -34,6 +34,16 @@ jobs:
               ASSIGNMENT="$TITLE"
             fi
           fi
+          # Last fallback: the "Начать задание" issue form puts the dropdown choice in
+          # the body under the "### Выберите задание" heading, not in title/label. Strip
+          # CR first so the blank line after the heading isn't counted as the value.
+          if [ -z "$ASSIGNMENT" ]; then
+            CHOICE=$(jq -r '.issue.body' "$GITHUB_EVENT_PATH" \
+              | awk '{gsub(/\r/,"")} /^### Выберите задание/{f=1;next} f&&NF{print;exit}')
+            if grep -qxF "$CHOICE" scripts/assignments.txt; then
+              ASSIGNMENT="$CHOICE"
+            fi
+          fi
           echo "assignment=$ASSIGNMENT" >> "$GITHUB_OUTPUT"
 
       - name: Comment if assignment could not be determined
