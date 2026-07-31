@@ -70,7 +70,9 @@ jobs:
           OUTCOME: ${{ steps.create.outcome }}
         run: |
           if [ "$OUTCOME" = "success" ]; then
-            gh issue comment "$ISSUE_NUMBER" --repo "$ISSUE_REPO" --body "Готово: $REPO_URL"
+            gh issue comment "$ISSUE_NUMBER" --repo "$ISSUE_REPO" --body "Готово: $REPO_URL
+
+⚠️ Репозиторий приватный — тебе прислано приглашение как коллаборатору (письмо на почту/уведомление на GitHub). Прими его на странице $REPO_URL/invitations, иначе клонирование даст 404, даже после авторизации."
             gh issue close "$ISSUE_NUMBER" --repo "$ISSUE_REPO"
           else
             gh issue comment "$ISSUE_NUMBER" --repo "$ISSUE_REPO" \
